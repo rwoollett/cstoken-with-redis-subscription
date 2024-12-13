@@ -9,73 +9,72 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { Context } from './context';
 import { schema } from '../graphql/schema';
-import { rabbitWrapper } from '../lib/rabbitWrapper';
-
 import { prisma } from "../lib/prismaClient";
-import { AMQPPubSub } from 'graphql-amqp-subscriptions';
+import { RedisPubSub } from 'graphql-redis-subscriptions';
+import Redis from 'ioredis';
 
 const PORT = process.env.PORT || 4000
 
 const app = express()
 const httpServer = createServer(app)
 
-async function start() {
 
-  if (!process.env.RABBIT_USER) {
-    throw new Error('RABBIT_USER must be defined');
-  }
-  if (!process.env.RABBIT_PASS) {
-    throw new Error('RABBIT_PASS must be defined');
-  }
-  if (!process.env.RABBIT_HOST) {
-    throw new Error('RABBIT_HOST must be defined');
-  }
+//function start() {
 
-  try {
-    await rabbitWrapper.connect(
-      process.env.RABBIT_USER,
-      process.env.RABBIT_PASS,
-      process.env.RABBIT_HOST
-    );
-  
-  } catch (e) {
-    console.log('RabbitMQ connect: ', e);
-    throw new Error('RabbitMQ must be connected');
-  }
+if (!process.env.REDIS_HOST) {
+  throw new Error('REDIS_HOST must be defined');
+}
+if (!process.env.REDIS_PORT) {
+  throw new Error('REDIS_PORT must be defined');
+}
+if (!process.env.REDIS_PASS) {
+  throw new Error('REDIS_PASS must be defined');
+}
+const redisOptions = {
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT as unknown as number,
+  password: process.env.REDIS_PASS,
+  lazyConnect: true,
+  keepAlive: 1000,
+};
 
-  const context: Context = {
-    prisma: prisma,
-    pubsub: new AMQPPubSub({
-      connection: rabbitWrapper.client
-    })
-  }
-
-  /** Create WS Server */
-  const wsServer = new WebSocketServer({
-    server: httpServer,
-    path: '/graphql',
+const context: Context = {
+  prisma: prisma,
+  pubsub: new RedisPubSub({
+    connectionListener(err) {
+      console.log("Connection listened:" ,err.message);
+    },
+    publisher: new Redis(redisOptions),
+    subscriber: new Redis(redisOptions)
   })
+}
 
-  /** hand-in created schema and have the WS Server start listening */
-  const serverCleanup = useServer({ schema, context }, wsServer)
+/** Create WS Server */
+const wsServer = new WebSocketServer({
+  server: httpServer,
+  path: '/graphql',
+})
 
-  const server = new ApolloServer<Context>({
-    schema,
-    plugins: [
-      ApolloServerPluginDrainHttpServer({ httpServer }),
-      {
-        async serverWillStart() {
-          return {
-            async drainServer() {
-              await serverCleanup.dispose()
-            },
-          }
-        },
+/** hand-in created schema and have the WS Server start listening */
+const serverCleanup = useServer({ schema, context }, wsServer)
+
+const server = new ApolloServer<Context>({
+  schema,
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    {
+      async serverWillStart() {
+        return {
+          async drainServer() {
+            await serverCleanup.dispose()
+          },
+        }
       },
-    ],
-  })
+    },
+  ],
+})
 
-  await server.start()
+server.start().then(() => {
 
   app.use('/graphql',
     cors<cors.CorsRequest>(),
@@ -87,7 +86,6 @@ async function start() {
     console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`)
   })
 
-
   let closed: boolean[] = [false, false, false];
   process.on('SIGINT', async function () {
     try {
@@ -96,17 +94,19 @@ async function start() {
         closed[0] = true;
       })
       await server.stop();
+      console.log('Stopped Process');
       closed[1] = true;
-      await rabbitWrapper.disconnect();
     } catch (err) {
       console.log('Process exit', err);
     }
-  })
+  });
 
-};
+  process.addListener("uncaughtException", () => {
+    console.log('somethus');
+    process.exit();
+  });
 
-start().then(() => {
-  console.log("Started");
 }).catch((e) => {
-  console.log(e);
-});
+  console.log('ERROR', e);
+});;
+

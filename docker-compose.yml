@@ -2,7 +2,7 @@
 services:
   cstoken:
     container_name: cstoken
-    image: cstoken:v1.0
+    image: cstoken-dev:v1.0
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,11 +16,9 @@ services:
     environment:
       DATABASE_URL: ${CSTOKEN_DATABASE_URL}
       PORT: '3002'      
-      RABBIT_HOST: ${CSTOKEN_RABBIT_HOST}
-      RABBIT_USER: ${CSTOKEN_RABBIT_USER}
-      RABBIT_PASS: ${CSTOKEN_RABBIT_PASS}
-      RABBIT_QUEUE: ${CSTOKEN_RABBIT_QUEUE}
-      DEBUG: "AMQPPubSub"
+      REDIS_HOST: ${CSTOKEN_REDIS_HOST}
+      REDIS_PORT: ${CSTOKEN_REDIS_PORT}
+      REDIS_PASS: ${CSTOKEN_REDIS_PASS}
     ports:
       - '3002:3002'
     networks:
@@ -28,8 +26,8 @@ services:
     depends_on:
       cstokenDB:
         condition: service_started
-      rabbitMQ:
-        condition: service_healthy
+      cache:
+        condition: service_started
 
       
   cstokenDB:
@@ -50,25 +48,21 @@ services:
     networks:
       - cstoken-network
 
-  rabbitMQ:
-    container_name: rabbitMQ
-    image: rabbitmq:3-management
-    healthcheck:
-      test: rabbitmq-diagnostics check_port_connectivity
-      interval: 10s
-      timeout: 30s
-      retries: 10    
+  cache:
+    container_name: cache
+    image: redis:6.2-alpine
+    restart: always
     ports:
-      - '15672:15672'
-      - '5672:5672'
-    volumes:
-      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq      
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${CSTOKEN_REDIS_PASS}
+    volumes: 
+      - cache:/data
     networks:
       - cstoken-network
 
 volumes:
   cstoken-data:
+  cache:
 
 networks:
   cstoken-network:

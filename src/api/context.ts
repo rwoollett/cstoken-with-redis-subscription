@@ -1,9 +1,9 @@
 import { PrismaClient } from "../lib/prismaClient";
-import { AMQPPubSub } from 'graphql-amqp-subscriptions';
+import { RedisPubSub  } from 'graphql-redis-subscriptions';
 
 export interface Context {
   prisma: PrismaClient;
-  pubsub: AMQPPubSub;
+  pubsub: RedisPubSub;
 }
 
 export interface TestingContext {
