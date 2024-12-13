@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id             Int           @id @default(autoincrement())
+  ip             String        @unique @db.VarChar(50)
+  name           String
+  connected      Boolean       @default(false)
+  connectedAt    DateTime?      //@default(now())
+  disconnectedAt DateTime?      //@default(now())
+  processId      String?
+  parentIp       String        @unique @db.VarChar(50)
+  //AcquireCS     AcquireCS[]   @relation("acquire")
+  RequestParent  RequestParent @relation(fields: [parentIp], references: [clientIp])
+  //RequestCS     RequestCS[]   @relation("source")
+}
+
+model RequestParent {
+  id       Int     @id @default(autoincrement())
+  clientIp String  @unique @db.VarChar(50)
+  //AcquireCS AcquireCS[] @relation("source")
+  Client   Client?
+  //RequestCS RequestCS[] @relation("parent")
+}
+
+// model RequestCS {
+//   id          Int           @id @default(autoincrement())
+//   requestedAt DateTime      @default(now())
+//   relayed     Boolean       @default(false)
+//   sourceIp    String
+//   parentIp    String
+//   parent      RequestParent @relation("parent", fields: [parentIp], references: [clientIp])
+//   source      Client        @relation("source", fields: [sourceIp], references: [ip])
+// }
+
+// model AcquireCS {
+//   id         Int           @id @default(autoincrement())
+//   acquiredAt DateTime      @default(now())
+//   ip         String
+//   sourceIp   String
+//   client     Client        @relation("acquire", fields: [ip], references: [ip])
+//   source     RequestParent @relation("source", fields: [sourceIp], references: [clientIp])
+// }

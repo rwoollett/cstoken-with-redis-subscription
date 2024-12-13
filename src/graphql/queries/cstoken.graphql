@@ -1,0 +1,24 @@
+mutation CreateRequestCS(
+  $sourceIp: String!
+  $parentIp: String!
+  $relayed: Boolean!
+) {
+  createRequestCS(sourceIp: $sourceIp, parentIp: $parentIp, relayed: $relayed) {
+    id
+    relayed
+    requestedAt
+    sourceIp
+    originalIp
+    parentIp
+  }
+}
+
+query GetClients($range: RangePort!) {
+  getClients(range: $range) {
+    ip
+    name
+    requestParent {
+      clientIp
+    }
+  }
+}

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Client" ALTER COLUMN "connectedAt" DROP NOT NULL,
+ALTER COLUMN "connectedAt" DROP DEFAULT,
+ALTER COLUMN "disconnectedAt" DROP NOT NULL,
+ALTER COLUMN "disconnectedAt" DROP DEFAULT;
