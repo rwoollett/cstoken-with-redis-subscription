@@ -18,9 +18,6 @@ const PORT = process.env.PORT || 4000
 const app = express()
 const httpServer = createServer(app)
 
-
-//function start() {
-
 if (!process.env.REDIS_HOST) {
   throw new Error('REDIS_HOST must be defined');
 }
@@ -38,15 +35,21 @@ const redisOptions = {
   keepAlive: 1000,
 };
 
+// const publishClient = new Redis(redisOptions);
+// publishClient.on('error', (err) => console.log('Redis publish error', err));
+// const subscribeClient = new Redis(redisOptions);
+// subscribeClient.on('error', (err) => console.log('Redis subscribe error', err));
+
+const redisPubSub = new RedisPubSub({
+  publisher: new Redis(redisOptions),
+  subscriber: new Redis(redisOptions)
+});
+redisPubSub.getPublisher().on('error', (err) => console.log('Redis publish error', err));
+redisPubSub.getSubscriber().on('error', (err) => console.log('Redis subscribe error', err));
+
 const context: Context = {
   prisma: prisma,
-  pubsub: new RedisPubSub({
-    connectionListener(err) {
-      console.log("Connection listened:" ,err.message);
-    },
-    publisher: new Redis(redisOptions),
-    subscriber: new Redis(redisOptions)
-  })
+  pubsub: redisPubSub
 }
 
 /** Create WS Server */
@@ -74,39 +77,43 @@ const server = new ApolloServer<Context>({
   ],
 })
 
-server.start().then(() => {
+const mainServer = httpServer.listen(PORT, () => {
+  console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`)
+})
 
-  app.use('/graphql',
-    cors<cors.CorsRequest>(),
-    bodyParser.json(),
-    expressMiddleware(server, { context: async () => context })
-  );
+function start() {
 
-  const mainServer = httpServer.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`)
-  })
-
-  let closed: boolean[] = [false, false, false];
-  process.on('SIGINT', async function () {
-    try {
-      !closed[0] && mainServer.close(async () => {
-        console.log('Closing  http listener');
-        closed[0] = true;
-      })
-      await server.stop();
-      console.log('Stopped Process');
-      closed[1] = true;
-    } catch (err) {
-      console.log('Process exit', err);
-    }
+  server.start().then(() => {
+    console.log('setting /grapghql');
+    app.use('/graphql',
+      cors<cors.CorsRequest>(),
+      bodyParser.json(),
+      expressMiddleware(server, { context: async () => context })
+    );
+  }).catch((e) => {
+    console.log('ERROR', e);
+  }).finally(() => {
+    console.log('Apollo GrapghQL server running.');
+    console.log('Ctrl-C to stop.')
   });
 
-  process.addListener("uncaughtException", () => {
-    console.log('somethus');
-    process.exit();
+
+  process.on('SIGINT', function () {
+
+    redisPubSub.close().then(() => {
+      console.log('Close Redis Subscription');
+    }).catch((err) => {
+      console.log('Redis qraph subscription close error', err)
+    });
+    server.stop().then(() => {
+      console.log('Close Apollo GrapghQL');
+    });
+    mainServer.close(async () => {
+      console.log('Closing Http Server');
+    });
+
   });
 
-}).catch((e) => {
-  console.log('ERROR', e);
-});;
+}
 
+start();
