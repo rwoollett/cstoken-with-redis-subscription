@@ -28,7 +28,7 @@ docker-compose up
 ```
 
 The compose runtime will generate:
-- RabbitMQ service (used for pubsub of events for apollo subscriptions as consumer of published events)
+- Redis cache (used for pubsub of events for apollo subscriptions as consumer of published events)
 - PostGres database
 - Network for the images to be located
 - This CSToken qraphql service
@@ -107,10 +107,9 @@ If not present the dev command will error.
 Runs the app in the development mode.\
 Open [http://localhost:3002/api/graphql](http://localhost:3002/graphql) to view playground.
 
-## Setup RabbitMQ for dev if not using docker-compose
+## Setup Redis cache for dev if not using docker-compose
 ```
-docker pull rabbitmq:3
-docker run --hostname my-rabbit -p 5672:5672 rabbitmq:3
+docker run --rm --name test-redis -p 6379:6379 redis:6.2-alpine redis-server --loglevel warning --requirepass <your password here>
 ```
 
 ## Setup a Postgres for dev if not using docker-compose
@@ -193,8 +192,7 @@ This is the structure of the files in the project:
     │   │   │   └── index.ts    # index for all typedefs (used in schema.ts)
     │   │   └── schema.ts       # Apollo Server local schema for CSToken service tables (Postgres database)
     │   ├── lib                 # Apollo client/server and Prisma client
-    │   │   ├── prismaClient.ts # Prisma client
-    │   │   └── rabbitWrapper.ts # RabbitMQ 
+    │   │   └── prismaClient.ts # Prisma client
     │   ├── prisma
     │   │   ├── migrations
     │   │   ├── schema.prisma   # Prisma SQL schema
