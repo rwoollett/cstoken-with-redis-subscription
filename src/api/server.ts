@@ -93,7 +93,7 @@ function start() {
   }).catch((e) => {
     console.log('ERROR', e);
   }).finally(() => {
-    console.log('Apollo GrapghQL server running.');
+    console.log('Apollo GraphQL server running.');
     console.log('Ctrl-C to stop.')
   });
 
@@ -106,7 +106,7 @@ function start() {
       console.log('Redis qraph subscription close error', err)
     });
     server.stop().then(() => {
-      console.log('Close Apollo GrapghQL');
+      console.log('Close Apollo GraphQL');
     });
     mainServer.close(async () => {
       console.log('Closing Http Server');
