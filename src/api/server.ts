@@ -98,8 +98,7 @@ function start() {
   });
 
 
-  process.on('SIGINT', function () {
-
+  function graceFully() {
     redisPubSub.close().then(() => {
       console.log('Close Redis Subscription');
     }).catch((err) => {
@@ -111,8 +110,11 @@ function start() {
     mainServer.close(async () => {
       console.log('Closing Http Server');
     });
+    
+  };
 
-  });
+  process.on('SIGINT', graceFully);
+  process.on('SIGTERM', graceFully);
 
 }
 
