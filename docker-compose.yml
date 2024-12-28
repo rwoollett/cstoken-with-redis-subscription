@@ -2,7 +2,7 @@
 services:
   cstoken:
     container_name: cstoken
-    image: cstoken:v1.0
+    image: cstoken-dev:v1.0
     build:
       context: .
       dockerfile: Dockerfile
@@ -48,6 +48,48 @@ services:
     networks:
       - cstoken-network
 
+  gol:
+    container_name: gol
+    image: gol-dev:v1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: ${GOL_DATABASE_URL}
+      PORT: '3005'      
+      REDIS_HOST: ${CSTOKEN_REDIS_HOST}
+      REDIS_PORT: ${CSTOKEN_REDIS_PORT}
+      REDIS_PASS: ${CSTOKEN_REDIS_PASS}
+    ports:
+      - '3005:3005'
+    networks:
+      - cstoken-network
+    depends_on:
+      golDB:
+        condition: service_started
+      cache:
+        condition: service_healthy
+
+  golDB:
+    container_name: golDB
+    #platform: linux/amd64 #for platform error on Apple M1 chips
+    restart: unless-stopped
+    env_file: .env
+    image: postgres:13.6
+    environment:
+      POSTGRES_USER: ${GOL_DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${GOL_DATABASE_PASSWORD}
+      POSTGRES_DB: ${GOL_DATABASE_NAME}
+    volumes:
+      - gol-data:/var/lib/postgresql/data/ #using a volume
+
+    ports:
+      - '5436:5432'
+    networks:
+      - cstoken-network
+
   cache:
     container_name: cache
     image: redis:6.2-alpine
@@ -69,6 +111,7 @@ services:
 volumes:
   cstoken-data:
   cache:
+  gol-data:
 
 networks:
   cstoken-network:
