@@ -18,7 +18,7 @@ actions made to gain a CSToken.
 
 Make docker image in project root folder with: 
 ```
-docker build -t cstoken-dev:v1.0 -f Dockerfile .
+docker build -t cstoken-dev:v1.0 -f Dockerfile.dev .
 ```
 
 The docker compose will run the docker image cstoken-dev:v1.0.

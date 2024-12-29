@@ -5,3 +5,14 @@ node_modules
 dist/
 coverage/
 docker-compose.yml
+prisma_scratch
+.env
+.env.local
+api.http
+cstoken.env
+Dockerfile
+Dockerfile.dev
+GeneratedCode.hpp
+IntrospectionQuery.graphql
+IntrospectionQuery.json
+scratch.txt
