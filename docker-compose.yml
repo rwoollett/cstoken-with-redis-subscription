@@ -2,7 +2,7 @@
 services:
   cstoken:
     container_name: cstoken
-    image: cstoken-dev:v1.0
+    image: rwlltt/cstoken-dev:v1.0
     build:
       context: .
       dockerfile: Dockerfile
@@ -50,7 +50,7 @@ services:
 
   gol:
     container_name: gol
-    image: gol-dev:v1.0
+    image: rwlltt/gol-dev:v1.0
     build:
       context: .
       dockerfile: Dockerfile
