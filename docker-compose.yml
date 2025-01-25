@@ -6,11 +6,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # develop:
-    #   watch:
-    #     - path: src/
-    #       action: sync
-    #       target: /app/src
     restart: unless-stopped
     env_file: .env
     environment:
@@ -48,45 +43,45 @@ services:
     networks:
       - cstoken-network
 
-  gol:
-    container_name: gol
-    image: gol-dev:v1.0
+  ttt:
+    container_name: ttt
+    image: ttt-dev:v1.0
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: ${GOL_DATABASE_URL}
-      PORT: '3005'      
+      DATABASE_URL: ${TTT_DATABASE_URL}
+      PORT: '3008'      
       REDIS_HOST: ${CSTOKEN_REDIS_HOST}
       REDIS_PORT: ${CSTOKEN_REDIS_PORT}
       REDIS_PASS: ${CSTOKEN_REDIS_PASS}
     ports:
-      - '3005:3005'
+      - '3008:3008'
     networks:
       - cstoken-network
     depends_on:
-      golDB:
+      tttDB:
         condition: service_started
       cache:
         condition: service_healthy
 
-  golDB:
-    container_name: golDB
+  tttDB:
+    container_name: tttDB
     #platform: linux/amd64 #for platform error on Apple M1 chips
     restart: unless-stopped
     env_file: .env
     image: postgres:13.6
     environment:
-      POSTGRES_USER: ${GOL_DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${GOL_DATABASE_PASSWORD}
-      POSTGRES_DB: ${GOL_DATABASE_NAME}
+      POSTGRES_USER: ${TTT_DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${TTT_DATABASE_PASSWORD}
+      POSTGRES_DB: ${TTT_DATABASE_NAME}
     volumes:
-      - gol-data:/var/lib/postgresql/data/ #using a volume
+      - ttt-data:/var/lib/postgresql/data/ #using a volume
 
     ports:
-      - '5436:5432'
+      - '5438:5432'
     networks:
       - cstoken-network
 
@@ -111,7 +106,7 @@ services:
 volumes:
   cstoken-data:
   cache:
-  gol-data:
+  ttt-data:
 
 networks:
   cstoken-network:
