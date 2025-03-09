@@ -1,5 +1,5 @@
 
-FROM node:20.18 as base
+FROM node:20.18 AS base
 
 FROM base AS deps
 
