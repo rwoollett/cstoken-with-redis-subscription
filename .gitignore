@@ -28,6 +28,7 @@ tmp.html
 .eslintcache
 .DS_Store
 .env.local
+.env.port
 .env.development.local
 .env.test.local
 .env.production.local

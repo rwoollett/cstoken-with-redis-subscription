@@ -26,6 +26,7 @@
     "amqplib": "^0.10.3",
     "braces": "^3.0.3",
     "cors": "^2.8.5",
+    "dotenv-cli": "^8.0.0",
     "dset": "^3.1.4",
     "graphql": "^16.8.1",
     "graphql-redis-subscriptions": "^2.7.0",

@@ -1,0 +1,13 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+  echo "Usage: $0 <port>"
+  exit 1
+fi
+
+# Assign the first argument to a variable
+port=$1
+
+echo DB_PORT=$port > .env.port
+npx dotenv -e .env.port -e .env.local -- npx prisma db push
+npx dotenv -e .env.port -e .env.local -- npx prisma db seed
+
