@@ -14,6 +14,7 @@ services:
       REDIS_HOST: ${CSTOKEN_REDIS_HOST}
       REDIS_PORT: ${CSTOKEN_REDIS_PORT}
       REDIS_PASS: ${CSTOKEN_REDIS_PASS}
+      JWT_SECRET: ${CSTOKEN_JWT_SECRET}
     ports:
       - '3002:3002'
     networks:
