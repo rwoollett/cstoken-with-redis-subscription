@@ -9,8 +9,9 @@ datasource db {
 
 model Client {
   id             Int           @id @default(autoincrement())
-  ip             String        @unique @db.VarChar(50)
   name           String
+  host           String        @default("localhost")
+  ip             String        @unique @db.VarChar(50)
   connected      Boolean       @default(false)
   connectedAt    DateTime?      //@default(now())
   disconnectedAt DateTime?      //@default(now())

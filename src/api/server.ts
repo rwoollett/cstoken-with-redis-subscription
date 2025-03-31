@@ -12,6 +12,7 @@ import { schema } from '../graphql/schema';
 import { prisma } from "../lib/prismaClient";
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import Redis from 'ioredis';
+import jwt from 'jsonwebtoken';
 
 const PORT = process.env.PORT || 4000
 
@@ -47,10 +48,58 @@ const redisPubSub = new RedisPubSub({
 redisPubSub.getPublisher().on('error', (err) => console.log('Redis publish error', err));
 redisPubSub.getSubscriber().on('error', (err) => console.log('Redis subscribe error', err));
 
-const context: Context = {
-  prisma: prisma,
-  pubsub: redisPubSub
-}
+////////////////////
+// const context: Context = {
+//   prisma: prisma,
+//   pubsub: redisPubSub
+// }
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+import { ContextFunction } from './context';
+
+const context: ContextFunction = async (
+  { req, connectionParams }: {
+    req?: express.Request;
+    connectionParams?: any
+  }) => {
+
+  let user = null;
+
+  if (req) {
+    console.log('express http', req.headers);
+    const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Authorization: Bearer <token>"
+    if (token) {
+      try {
+        user = jwt.verify(token, JWT_SECRET); // Verify the token
+      } catch (err) {
+        console.error('Invalid or expired token:', err);
+      }
+    }
+
+  } else if (connectionParams) {
+    // Handle WebSocket requests
+    console.log('ws', connectionParams);
+    const token = connectionParams.Authorization?.split(' ')[1]; // Extract token from "Authorization: Bearer <token>"
+    if (token) {
+      try {
+        user = jwt.verify(token, JWT_SECRET); // Verify the token
+      } catch (err) {
+        console.error('Invalid or expired token:', err);
+      }
+    }
+
+  } else {
+    console.log("No req");
+  }
+
+  return {
+    prisma,
+    pubsub: redisPubSub,
+    user, // Attach the user to the context
+  };
+};
+////////////////////////////
 
 /** Create WS Server */
 const wsServer = new WebSocketServer({
@@ -59,7 +108,16 @@ const wsServer = new WebSocketServer({
 })
 
 /** hand-in created schema and have the WS Server start listening */
-const serverCleanup = useServer({ schema, context }, wsServer)
+const serverCleanup = useServer(
+  {
+    schema,
+    context: async (ctx) => {
+      const connectionParams = ctx.connectionParams;
+      return context({ connectionParams });
+    },
+  },
+  wsServer
+);
 
 const server = new ApolloServer<Context>({
   schema,
@@ -70,7 +128,7 @@ const server = new ApolloServer<Context>({
         return {
           async drainServer() {
             await serverCleanup.dispose()
-          },
+          }
         }
       },
     },
@@ -88,7 +146,7 @@ function start() {
     app.use('/graphql',
       cors<cors.CorsRequest>(),
       bodyParser.json(),
-      expressMiddleware(server, { context: async () => context })
+      expressMiddleware(server, { context })
     );
   }).catch((e) => {
     console.log('ERROR', e);
@@ -110,7 +168,7 @@ function start() {
     mainServer.close(async () => {
       console.log('Closing Http Server');
     });
-    
+
   };
 
   process.on('SIGINT', graceFully);

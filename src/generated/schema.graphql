@@ -14,6 +14,7 @@ type Client {
   connected: Boolean!
   connectedAt: String!
   disconnectedAt: String!
+  host: String!
   id: Int!
   ip: String!
   name: String!
@@ -41,7 +42,7 @@ type DisconnectedClient {
 type Mutation {
   connectClientCS(processId: String!, sourceIp: String!): ConnectedClient!
   createAcquireCS(ip: String!, sourceIp: String!): AcquireCS!
-  createClient(connected: Boolean!, ip: String!, name: String!): Client!
+  createClient(connected: Boolean!, host: String!, ip: String!, name: String!): Client!
   createRequestCS(originalIp: String!, parentIp: String!, relayed: Boolean!, sourceIp: String!): RequestCS!
   disconnectClientCS(sourceIp: String!): DisconnectedClient!
 }

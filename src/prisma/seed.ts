@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
   const prismaTest = new PrismaClient({
     datasources: {
       db: {
-        url: process.env.DATABASE_URL
+        url: process.env.DATABASE_TEST_URL
       }
     }
   });
@@ -19,6 +19,10 @@ import { PrismaClient } from "@prisma/client";
   await prismaTest.$executeRaw` INSERT INTO public."RequestParent"("clientIp") VALUES (5060);  `;
   await prismaTest.$executeRaw` INSERT INTO public."RequestParent"("clientIp") VALUES (5070);  `;
   await prismaTest.$executeRaw` INSERT INTO public."RequestParent"("clientIp") VALUES (5080);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."RequestParent"("clientIp") VALUES (7010);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."RequestParent"("clientIp") VALUES (7020);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."RequestParent"("clientIp") VALUES (7030);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."RequestParent"("clientIp") VALUES (7040);  `;
 
   await prismaTest.$executeRaw`
   TRUNCATE TABLE "Client" RESTART IDENTITY CASCADE;
@@ -32,6 +36,10 @@ import { PrismaClient } from "@prisma/client";
   await prismaTest.$executeRaw` INSERT INTO public."Client"(	ip, name, connected, "parentIp")	VALUES (5060, 'Grape', false, 5060);  `;
   await prismaTest.$executeRaw` INSERT INTO public."Client"(	ip, name, connected, "parentIp")	VALUES (5070, 'Manderine', false, 5070);  `;
   await prismaTest.$executeRaw` INSERT INTO public."Client"(	ip, name, connected, "parentIp")	VALUES (5080, 'Apple', false, 5080);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."Client"(	host, ip, name, connected, "parentIp")	VALUES ('netproc7010', 7010, 'netproc7010', false, 7010);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."Client"(	host, ip, name, connected, "parentIp")	VALUES ('netproc7020', 7020, 'netproc7020', false, 7020);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."Client"(	host, ip, name, connected, "parentIp")	VALUES ('netproc7030', 7030, 'netproc7030', false, 7030);  `;
+  await prismaTest.$executeRaw` INSERT INTO public."Client"(	host, ip, name, connected, "parentIp")	VALUES ('netproc7040', 7040, 'netproc7040', false, 7040);  `;
   prismaTest.$disconnect();
 
 })();

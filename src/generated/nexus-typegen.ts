@@ -41,6 +41,7 @@ export interface NexusGenObjects {
     connected: boolean; // Boolean!
     connectedAt: string; // String!
     disconnectedAt: string; // String!
+    host: string; // String!
     id: number; // Int!
     ip: string; // String!
     name: string; // String!
@@ -92,6 +93,7 @@ export interface NexusGenFieldTypes {
     connected: boolean; // Boolean!
     connectedAt: string; // String!
     disconnectedAt: string; // String!
+    host: string; // String!
     id: number; // Int!
     ip: string; // String!
     name: string; // String!
@@ -146,6 +148,7 @@ export interface NexusGenFieldTypeNames {
     connected: 'Boolean'
     connectedAt: 'String'
     disconnectedAt: 'String'
+    host: 'String'
     id: 'Int'
     ip: 'String'
     name: 'String'
@@ -202,6 +205,7 @@ export interface NexusGenArgTypes {
     }
     createClient: { // args
       connected: boolean; // Boolean!
+      host: string; // String!
       ip: string; // String!
       name: string; // String!
     }

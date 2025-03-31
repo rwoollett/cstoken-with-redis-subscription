@@ -15,8 +15,9 @@ export const getClientsResolver: FieldResolver<
   const clients = await prisma.client.findMany({
     select: {
       id: true,
-      ip: true,
       name: true,
+      host: true,
+      ip: true,
       connected: true,
       connectedAt: true,
       processId: true,
@@ -45,8 +46,12 @@ export const getClientsResolver: FieldResolver<
 
 export const createClientResolver: FieldResolver<
   "Mutation", "createClient"
-> = async (_, { ip, name, connected }, { prisma, pubsub }) => {
+> = async (_, { name, host, ip, connected }, { prisma, pubsub, user }) => {
 
+  if (!user) {
+   // throw new Error('Unauthorized');
+   console.log("No user is authenticated");
+  }
   const isParentRecord = await prisma.requestParent.findFirst({
     where: { clientIp: ip }
   });
@@ -61,8 +66,9 @@ export const createClientResolver: FieldResolver<
 
   const newClient = await prisma.client.create({
     data: {
-      ip,
       name,
+      host,
+      ip,
       connected,
       parentIp: ip
     }
@@ -70,8 +76,9 @@ export const createClientResolver: FieldResolver<
 
   return {
     id: newClient.id,
-    ip,
     name,
+    host,
+    ip,
     connected,
     connectedAt: newClient.connectedAt ? newClient.connectedAt.toISOString() : "",
     disconnectedAt: newClient.disconnectedAt ? newClient.disconnectedAt.toISOString() : "",

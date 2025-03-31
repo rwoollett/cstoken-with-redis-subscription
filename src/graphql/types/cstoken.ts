@@ -45,8 +45,9 @@ export const Client = objectType({
   name: 'Client',
   definition(t) {
     t.nonNull.int('id')
-    t.nonNull.string('ip')
     t.nonNull.string('name')
+    t.nonNull.string('host')
+    t.nonNull.string('ip')
     t.nonNull.boolean('connected')
     t.nonNull.string('connectedAt')
     t.string('processId')
@@ -144,8 +145,9 @@ export const CSTokenMutations = extendType({
     t.nonNull.field('createClient', {
       type: 'Client',
       args: {
-        ip: nonNull(stringArg()),
         name: nonNull(stringArg()),
+        host: nonNull(stringArg()),
+        ip: nonNull(stringArg()),
         connected: nonNull(booleanArg())
       },
       resolve: createClientResolver
