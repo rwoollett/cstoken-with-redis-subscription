@@ -3,6 +3,7 @@ import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import cookieSession from 'cookie-session';
 import express from 'express';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { createServer } from 'http';
@@ -31,6 +32,16 @@ if (!process.env.REDIS_PASS) {
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET must be defined');
 }
+
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: [process.env.COOKIE_SECRET || 'defaultSecret'], // Use a secure key for signing cookies
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
+  })
+);
 
 const redisOptions = {
   host: process.env.REDIS_HOST,
@@ -67,12 +78,16 @@ const context: ContextFunction = async (
     req?: express.Request;
     connectionParams?: any
   }) => {
-
+    
   let user = null;
 
   if (req) {
     console.log('express http', req.headers);
+    console.log('session', req.session); // Access session data
+
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Authorization: Bearer <token>"
+    // const token = req.session?.token ||
+    //   req.headers.authorization?.split(' ')[1]; // Fallback to Authorization header
     if (token) {
       try {
         user = jwt.verify(token, JWT_SECRET); // Verify the token
