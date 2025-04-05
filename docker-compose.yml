@@ -1,5 +1,21 @@
 
 services:
+  auth:
+    container_name: auth
+    image:  auth:v1.0
+    env_file: .env
+    ports:
+      - 3001:3001
+    environment:
+      PORT: ${AUTH_PORT}
+      MONGO_URI: ${AUTH_MONGO_URI}
+      DOCTYPE: ${AUTH_DOCTYPE}
+      JWT_KEY: ${AUTH_JWT_KEY}
+      AWS_ACCESS_KEY_ID: ${AUTH_AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AUTH_AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AUTH_AWS_DEFAULT_REGION}
+      WHITELIST_CORS: ${AUTH_WHITELIST_CORS}
+
   cstoken:
     container_name: cstoken
     image: cstoken-dev:v1.0
