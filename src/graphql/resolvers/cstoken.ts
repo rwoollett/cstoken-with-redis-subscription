@@ -11,7 +11,15 @@ import {
 export const getClientsResolver: FieldResolver<
   "Query",
   "getClients"
-> = async (_, { range }, { prisma, pubsub }) => {
+> = async (_, { range }, { prisma, pubsub, user }) => {
+
+  if (!user) {
+    // throw new Error('Unauthorized');
+    console.log("No user is authenticated");
+   } else {
+    console.log('User', user);
+   }
+ 
   const clients = await prisma.client.findMany({
     select: {
       id: true,
@@ -46,12 +54,8 @@ export const getClientsResolver: FieldResolver<
 
 export const createClientResolver: FieldResolver<
   "Mutation", "createClient"
-> = async (_, { name, host, ip, connected }, { prisma, pubsub, user }) => {
+> = async (_, { name, host, ip, connected }, { prisma, pubsub }) => {
 
-  if (!user) {
-   // throw new Error('Unauthorized');
-   console.log("No user is authenticated");
-  }
   const isParentRecord = await prisma.requestParent.findFirst({
     where: { clientIp: ip }
   });

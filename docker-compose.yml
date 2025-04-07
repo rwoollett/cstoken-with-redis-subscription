@@ -31,6 +31,7 @@ services:
       REDIS_PORT: ${CSTOKEN_REDIS_PORT}
       REDIS_PASS: ${CSTOKEN_REDIS_PASS}
       JWT_SECRET: ${CSTOKEN_JWT_SECRET}
+      WHITELIST_CORS: ${CSTOKEN_WHITELIST_CORS}
     ports:
       - '3002:3002'
     networks:

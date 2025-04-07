@@ -14,11 +14,8 @@ import { prisma } from "../lib/prismaClient";
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import Redis from 'ioredis';
 import jwt from 'jsonwebtoken';
+import { ContextFunction } from './context';
 
-const PORT = process.env.PORT || 4000
-
-const app = express()
-const httpServer = createServer(app)
 
 if (!process.env.REDIS_HOST) {
   throw new Error('REDIS_HOST must be defined');
@@ -33,15 +30,35 @@ if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET must be defined');
 }
 
+
+const app = express()
+const httpServer = createServer(app)
+
+const PORT = process.env.PORT || 4000
+const JWT_SECRET = process.env.JWT_SECRET;
+const envWhitelist = process.env.WHITELIST_CORS ? (process.env.WHITELIST_CORS as string).split(',') : [];
+console.log('envWhitelist', envWhitelist);
+const whitelist = [
+  'http://localhost:8080'
+].concat(envWhitelist);
+console.log('Whitelist', whitelist);
+
 app.use(
   cookieSession({
-    name: 'session',
-    keys: [process.env.COOKIE_SECRET || 'defaultSecret'], // Use a secure key for signing cookies
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    name: 'auth:sess',
+    // keys: [process.env.COOKIE_SECRET || 'defaultSecret'], // Use a secure key for signing cookies
+    // maxAge: 24 * 60 * 60 * 1000, // 1 day
+    signed: false,
+    secure: false, // process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
+    path: '/',
   })
 );
+// app.use((req, res, next) => {
+//   //console.log('Cookies:', req.cookies); // Requires cookie-parser if not using cookie-session
+//   console.log('Session:', req.session); // For cookie-session
+//   next();
+// });
 
 const redisOptions = {
   host: process.env.REDIS_HOST,
@@ -69,16 +86,49 @@ redisPubSub.getSubscriber().on('error', (err) => console.log('Redis subscribe er
 //   pubsub: redisPubSub
 // }
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// const authenticate = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+//   if (!req.session || !req.session.token) {
+//     return res.status(401).send({ error: 'Unauthorized' });
+//   }
 
-import { ContextFunction } from './context';
+//   try {
+//     const user = jwt.verify(req.session.token, process.env.JWT_SECRET!); // Verify the token
+//     req.user = user; // Attach the user to the request object
+//     next(); // Pass control to the next middleware or route handler
+//   } catch (err) {
+//     console.error('Invalid token:', err);
+//     return res.status(401).send({ error: 'Unauthorized' });
+//   }
+// };
+// const authenticate = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+//   // if (!req.session || !req.session.token) {
+//   //   return res.status(401).send({ error: 'Unauthorized' });
+//   // }
+//   if (!req.currentUser) {
+//     console.log('middle not authorized');
+//     //throw new NotAuthorizedError();
+//   } else {
+//     console.log('middle', req.currentUser);
+//   }
+//   next();
+//   // try {
+//   //   const user = jwt.verify(req.session.token, process.env.JWT_SECRET!); // Verify the token
+//   //   req.user = user; // Attach the user to the request object
+//   //   next(); // Pass control to the next middleware or route handler
+//   // } catch (err) {
+//   //   console.error('Invalid token:', err);
+//   //   return res.status(401).send({ error: 'Unauthorized' });
+//   // }
+// };
+
+
 
 const context: ContextFunction = async (
   { req, connectionParams }: {
     req?: express.Request;
     connectionParams?: any
   }) => {
-    
+
   let user = null;
 
   if (req) {
@@ -98,7 +148,7 @@ const context: ContextFunction = async (
 
   } else if (connectionParams) {
     // Handle WebSocket requests
-    console.log('ws', connectionParams);
+    //console.log('ws', connectionParams);
     const token = connectionParams.Authorization?.split(' ')[1]; // Extract token from "Authorization: Bearer <token>"
     if (token) {
       try {
@@ -163,7 +213,22 @@ function start() {
   server.start().then(() => {
     console.log('setting /grapghql');
     app.use('/graphql',
-      cors<cors.CorsRequest>(),
+      cors<cors.CorsRequest>({
+        //origin: 'http://localhost:3011', // Replace with your frontend's origin
+        origin: function (origin: string | undefined, callback) {
+          console.log('appoloo Origin', origin);
+          // allow requests with no origin 
+          if (!origin) return callback(null, true);
+          if (whitelist.indexOf(origin) === -1) {
+            const message = `The CORS policy for this origin doesn't ` +
+              `allow access from the particular origin: ${origin}.`;
+            return callback(new Error(message), false);
+          }
+          return callback(null, true);
+        },
+        credentials: true, // Allow credentials (cookies)
+        allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+      }),
       bodyParser.json(),
       expressMiddleware(server, { context })
     );
