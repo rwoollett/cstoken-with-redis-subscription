@@ -37,11 +37,10 @@ const httpServer = createServer(app)
 const PORT = process.env.PORT || 4000
 const JWT_SECRET = process.env.JWT_SECRET;
 const envWhitelist = process.env.WHITELIST_CORS ? (process.env.WHITELIST_CORS as string).split(',') : [];
-console.log('envWhitelist', envWhitelist);
 const whitelist = [
   'http://localhost:8080'
 ].concat(envWhitelist);
-console.log('Whitelist', whitelist);
+console.log('Whitelist - cors (to handle included cookies with cors)', whitelist);
 
 app.use(
   cookieSession({
@@ -80,49 +79,6 @@ const redisPubSub = new RedisPubSub({
 redisPubSub.getPublisher().on('error', (err) => console.log('Redis publish error', err));
 redisPubSub.getSubscriber().on('error', (err) => console.log('Redis subscribe error', err));
 
-////////////////////
-// const context: Context = {
-//   prisma: prisma,
-//   pubsub: redisPubSub
-// }
-
-// const authenticate = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-//   if (!req.session || !req.session.token) {
-//     return res.status(401).send({ error: 'Unauthorized' });
-//   }
-
-//   try {
-//     const user = jwt.verify(req.session.token, process.env.JWT_SECRET!); // Verify the token
-//     req.user = user; // Attach the user to the request object
-//     next(); // Pass control to the next middleware or route handler
-//   } catch (err) {
-//     console.error('Invalid token:', err);
-//     return res.status(401).send({ error: 'Unauthorized' });
-//   }
-// };
-// const authenticate = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-//   // if (!req.session || !req.session.token) {
-//   //   return res.status(401).send({ error: 'Unauthorized' });
-//   // }
-//   if (!req.currentUser) {
-//     console.log('middle not authorized');
-//     //throw new NotAuthorizedError();
-//   } else {
-//     console.log('middle', req.currentUser);
-//   }
-//   next();
-//   // try {
-//   //   const user = jwt.verify(req.session.token, process.env.JWT_SECRET!); // Verify the token
-//   //   req.user = user; // Attach the user to the request object
-//   //   next(); // Pass control to the next middleware or route handler
-//   // } catch (err) {
-//   //   console.error('Invalid token:', err);
-//   //   return res.status(401).send({ error: 'Unauthorized' });
-//   // }
-// };
-
-
-
 const context: ContextFunction = async (
   { req, connectionParams }: {
     req?: express.Request;
@@ -132,12 +88,7 @@ const context: ContextFunction = async (
   let user = null;
 
   if (req) {
-    console.log('express http', req.headers);
-    console.log('session', req.session); // Access session data
-
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Authorization: Bearer <token>"
-    // const token = req.session?.token ||
-    //   req.headers.authorization?.split(' ')[1]; // Fallback to Authorization header
     if (token) {
       try {
         user = jwt.verify(token, JWT_SECRET); // Verify the token
@@ -157,9 +108,6 @@ const context: ContextFunction = async (
         console.error('Invalid or expired token:', err);
       }
     }
-
-  } else {
-    console.log("No req");
   }
 
   return {
@@ -215,17 +163,17 @@ function start() {
     app.use('/graphql',
       cors<cors.CorsRequest>({
         //origin: 'http://localhost:3011', // Replace with your frontend's origin
-        origin: function (origin: string | undefined, callback) {
-          console.log('appoloo Origin', origin);
-          // allow requests with no origin 
-          if (!origin) return callback(null, true);
-          if (whitelist.indexOf(origin) === -1) {
-            const message = `The CORS policy for this origin doesn't ` +
-              `allow access from the particular origin: ${origin}.`;
-            return callback(new Error(message), false);
-          }
-          return callback(null, true);
-        },
+        // origin: function (origin: string | undefined, callback) {
+        //   console.log('apollo: Origin', origin);
+        //   // allow requests with no origin 
+        //   if (!origin) return callback(null, true);
+        //   if (whitelist.indexOf(origin) === -1) {
+        //     const message = `The CORS policy for this origin doesn't ` +
+        //       `allow access from the particular origin: ${origin}.`;
+        //     return callback(new Error(message), false);
+        //   }
+        //   return callback(null, true);
+        // },
         credentials: true, // Allow credentials (cookies)
         allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization"
       }),
