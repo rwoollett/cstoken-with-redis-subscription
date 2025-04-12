@@ -6,7 +6,7 @@ import express from 'express';
 export interface Context {
   prisma: PrismaClient;
   pubsub: RedisPubSub;
-  user: string | jwt.JwtPayload | null;
+  user: jwt.JwtPayload | null;
 }
 
 export type ContextFunction = (

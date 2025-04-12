@@ -13,7 +13,7 @@ import { schema } from '../graphql/schema';
 import { prisma } from "../lib/prismaClient";
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import Redis from 'ioredis';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { ContextFunction } from './context';
 
 
@@ -91,7 +91,7 @@ const context: ContextFunction = async (
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from "Authorization: Bearer <token>"
     if (token) {
       try {
-        user = jwt.verify(token, JWT_SECRET); // Verify the token
+        user = jwt.verify(token, JWT_SECRET) as JwtPayload; // Verify the token
       } catch (err) {
         console.error('Invalid or expired token:', err);
       }
@@ -103,7 +103,7 @@ const context: ContextFunction = async (
     const token = connectionParams.Authorization?.split(' ')[1]; // Extract token from "Authorization: Bearer <token>"
     if (token) {
       try {
-        user = jwt.verify(token, JWT_SECRET); // Verify the token
+        user = jwt.verify(token, JWT_SECRET) as JwtPayload; // Verify the token
       } catch (err) {
         console.error('Invalid or expired token:', err);
       }
