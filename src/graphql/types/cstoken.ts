@@ -227,7 +227,7 @@ export const Subscription = extendType({
       resolve: subcribeRequestCSResolver
     });
     t.field(Subjects.AcquireCSCreated, {
-      type: 'AcquireCS',
+      type: 'AcquireCS',  
       subscribe(_root, _args, ctx) {
         return ctx.pubsub.asyncIterator(Subjects.AcquireCSCreated)
       },

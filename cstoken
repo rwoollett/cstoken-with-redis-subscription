@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Navigate to the folder
+cd ~/cppSources/network-dash/cstoken/with_redis || { echo "Folder not found"; exit 1; }
+
+# Run the command
+docker compose up -d
+
+docker containers ls
+
+docker compose logs -f
+
+docker compose down
+
+pwd
+
+cd
+
+
+
+
