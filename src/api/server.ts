@@ -32,6 +32,9 @@ if (!process.env.JWT_SECRET) {
 
 
 const app = express()
+
+app.get('/health', (req, res) => res.send('OK'));
+
 const httpServer = createServer(app)
 
 const PORT = process.env.PORT || 4000
